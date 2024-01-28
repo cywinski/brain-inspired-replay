@@ -1,5 +1,5 @@
 # Brain-Inspired Replay
-A PyTorch implementation of the continual learning experiments with deep neural networks described in the 
+A PyTorch implementation of the continual learning experiments with deep neural networks described in the
 following paper:
 * Brain-inspired replay for continual learning with artificial neural networks: https://www.nature.com/articles/s41467-020-17866-2
 
@@ -20,7 +20,7 @@ git clone https://github.com/GMvandeVen/brain-inspired-replay.git
 cd brain-inspired-replay
 ```
 (If downloading the zip-file, extract the files and change into the extracted folder.)
- 
+
 Assuming  Python and pip are set up, the Python-packages used by this code can be installed using:
 ```bash
 pip install -r requirements.txt
@@ -57,10 +57,10 @@ For this visdom must be activated first, see instructions below.
 
 
 ## Running comparisons from the paper
-The script `create_figures.sh` provides step-by-step instructions for re-running the experiments and re-creating the 
+The script `create_figures.sh` provides step-by-step instructions for re-running the experiments and re-creating the
 figures reported in the paper.
 
-Although it is possible to run this script as it is, it will take very long and it is probably sensible to parallellize 
+Although it is possible to run this script as it is, it will take very long and it is probably sensible to parallellize
 the experiments.
 
 
@@ -110,9 +110,54 @@ Please consider citing our paper if you use this code in your research:
 ```
 
 ### Acknowledgments
-The research project from which this code originated has been supported by an IBRO-ISN Research Fellowship, by the 
-Lifelong Learning Machines (L2M) program of the Defence Advanced Research Projects Agency (DARPA) via contract number 
-HR0011-18-2-0025 and by the Intelligence Advanced Research Projects Activity (IARPA) via Department of 
-Interior/Interior Business Center (DoI/IBC) contract number D16PC00003. Disclaimer: views and conclusions 
+The research project from which this code originated has been supported by an IBRO-ISN Research Fellowship, by the
+Lifelong Learning Machines (L2M) program of the Defence Advanced Research Projects Agency (DARPA) via contract number
+HR0011-18-2-0025 and by the Intelligence Advanced Research Projects Activity (IARPA) via Department of
+Interior/Interior Business Center (DoI/IBC) contract number D16PC00003. Disclaimer: views and conclusions
 contained herein are those of the authors and should not be interpreted as necessarily representing the official
 policies or endorsements, either expressed or implied, of DARPA, IARPA, DoI/IBC, or the U.S. Government.
+
+
+## CIFAR100-CI10 reproduction from paper
+```
+python main_pretrain.py --experiment=CIFAR10 --epochs=100 --augment --convE-stag=e100
+python main_cl.py --experiment=CIFAR100 --convE-ltag=e100 --seed=12 --scenario=class --replay="generative" --brain-inspired --tasks 10
+```
+EVALUATION RESULTS:
+
+ Accuracy of final model on test-set:
+ - For classes from task 1: 0.0470
+ - For classes from task 2: 0.0390
+ - For classes from task 3: 0.0360
+ - For classes from task 4: 0.1030
+ - For classes from task 5: 0.0960
+ - For classes from task 6: 0.0980
+ - For classes from task 7: 0.2870
+ - For classes from task 8: 0.2660
+ - For classes from task 9: 0.4830
+ - For classes from task 10: 0.6480
+=> Average accuracy over all 100 classes: 0.2103
+
+## CIFAR-10 CI2
+```
+python main_pretrain.py --experiment=CIFAR10 --epochs=100 --augment --convE-stag=e100 --model-dir "store/models/CIFAR10_CI2" --tasks=2 --scenario=class
+python main_cl.py --experiment=CIFAR10 --convE-ltag=e100 --seed=12 --scenario=class --replay="generative" --brain-inspired --tasks 2 --model-dir "store/models/CIFAR10_CI2"
+```
+
+## CIFAR-10 CI5
+```
+python main_pretrain.py --experiment=CIFAR10 --epochs=100 --augment --convE-stag=e100 --model-dir "store/models/CIFAR10_CI5" --tasks=5 --scenario=class
+python main_cl.py --experiment=CIFAR10 --convE-ltag=e100 --seed=12 --scenario=class --replay="generative" --brain-inspir
+ed --tasks 5 --model-dir "store/models/CIFAR10_CI5"
+```
+## CIFAR-100 CI5
+```
+python main_pretrain.py --experiment=CIFAR100 --epochs=100 --augment --convE-stag=e100 --model-dir "store/models/CIFAR100_CI5" --tasks=5 --scenario=class
+python main_cl.py --experiment=CIFAR100 --convE-ltag=e100 --seed=14 --scenario=class --replay="generative" --brain-inspired --tasks 5 --model-dir "store/models/CIFAR100_CI5"
+```
+## CIFAR-100 CI10
+```
+python main_pretrain.py --experiment=CIFAR100 --epochs=100 --augment --convE-stag=e100 --model-dir "store/models/CIFAR100_CI10" --tasks=10 --scenario=class
+python main_cl.py --experiment=CIFAR100 --convE-ltag=e100 --seed=12 --scenario=class --replay="generative" --brain-inspi
+red --tasks 10 --model-dir "store/models/CIFAR100_CI10"
+```

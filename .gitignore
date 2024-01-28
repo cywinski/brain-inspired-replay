@@ -3,7 +3,7 @@ store/plots/
 store/results/
 store/models/mM*
 store/models/gM*
-
+store/
 .env
 __pycache__/
 .idea/
