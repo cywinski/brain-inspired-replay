@@ -36,6 +36,7 @@ def handle_inputs():
     # Parse, process (i.e., set defaults for unselected options) and check chosen options
     parser.add_argument("--tasks", type=int)
     parser.add_argument("--scenario")
+    parser.add_argument("--d_dir", type=str, default="data")
     args = parser.parse_args()
     options.set_defaults(args, **kwargs)
     options.check_for_errors(args, **kwargs)

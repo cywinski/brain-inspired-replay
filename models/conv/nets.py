@@ -13,7 +13,7 @@ class ConvLayers(nn.Module):
                 - with [out_channels] = [start_channels] x 2**[reducing_layers] x [block.expansion]
                        [out_size] = [image_size] / 2**[reducing_layers]'''
 
-    def __init__(self, conv_type="standard", block_type="basic", num_blocks=2,
+    def __init__(self, conv_type="resnet", block_type="basic", num_blocks=2,
                  image_channels=3, depth=5, start_channels=16, reducing_layers=None, batch_norm=True, nl="relu",
                  output="normal", global_pooling=False, gated=False):
         '''Initialize stacked convolutional layers (either "standard" or "res-net" ones--1st layer is always standard).

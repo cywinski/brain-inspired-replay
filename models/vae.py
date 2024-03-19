@@ -17,7 +17,7 @@ class AutoEncoder(ContinualLearner):
 
     def __init__(self, image_size, image_channels, classes,
                  # -conv-layers
-                 conv_type="standard", depth=0, start_channels=64, reducing_layers=3, conv_bn=True, conv_nl="relu",
+                 conv_type="resnet", depth=0, start_channels=64, reducing_layers=3, conv_bn=True, conv_nl="relu",
                  num_blocks=2, global_pooling=False, no_fnl=True, convE=None, conv_gated=False,
                  # -fc-layers
                  fc_layers=3, fc_units=1000, h_dim=400, fc_drop=0, fc_bn=False, fc_nl="relu", excit_buffer=False,
@@ -25,7 +25,7 @@ class AutoEncoder(ContinualLearner):
                  # -prior
                  prior="standard", z_dim=20, per_class=False, n_modes=1,
                  # -decoder
-                 recon_loss='BCE', network_output="sigmoid", deconv_type="standard", hidden=False,
+                 recon_loss='BCE', network_output="sigmoid", deconv_type="resnet", hidden=False,
                  dg_gates=False, dg_type="task", dg_prop=0., tasks=5, scenario="task", device='cuda',
                  # -classifer
                  classifier=True, classify_opt="beforeZ",
@@ -479,7 +479,7 @@ class AutoEncoder(ContinualLearner):
             else:
                 a_logsum = torch.log(torch.clamp(torch.sum(a_exp, dim=1), min=1e-40))  # -> sum over modes: [batch_size]
             log_p_z = a_logsum + a_max  # [batch_size]
-            
+
         return log_p_z
 
 

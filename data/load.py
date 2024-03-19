@@ -9,7 +9,7 @@ from data.manipulate import (
     TransformedDataset,
     permutate_image_pixels,
 )
-
+from tqdm import tqdm
 
 def get_dataset(
     name,
@@ -30,8 +30,8 @@ def get_dataset(
     dataset_class = AVAILABLE_DATASETS[data_name]
 
     # specify image-transformations to be applied
-    transforms_list = [*AVAILABLE_TRANSFORMS["augment"]] if augment else []
-    transforms_list += [*AVAILABLE_TRANSFORMS[name]]
+    transforms_list = [*AVAILABLE_TRANSFORMS[name]]
+    transforms_list += [*AVAILABLE_TRANSFORMS["augment"]] if augment else []
     if normalize:
         transforms_list += [*AVAILABLE_TRANSFORMS[name + "_norm"]]
     if permutation is not None:
@@ -39,11 +39,10 @@ def get_dataset(
             transforms.Lambda(lambda x, p=permutation: permutate_image_pixels(x, p))
         )
     dataset_transform = transforms.Compose(transforms_list)
-
     # load data-set
     dataset = dataset_class(
         "{dir}/{name}".format(dir=dir, name=data_name),
-        train=False if type == "test" else True,
+        train=False if type == "val" else True,
         download=download,
         transform=dataset_transform,
         target_transform=target_transform,
@@ -52,13 +51,13 @@ def get_dataset(
     # if relevant, select "train" or "validation"-set from training-part of data
     # NOTE: this split assumes order of items in training-dataset is random!
     # (e.g., not first all samples from clas 1, then all samples from class 2, etc.)
-    if (type == "train" or type == "valid") and valid_prop > 0:
+    if (type == "train" or type == "val") and valid_prop > 0:
         dataset_size = len(dataset)
         indices = list(range(dataset_size))
         split = int(np.floor(valid_prop * dataset_size))
         if type == "train":
             indices_to_use = indices[split:]
-        elif type == "valid":
+        elif type == "val":
             indices_to_use = indices[:split]
         dataset = ReducedDataset(dataset, indices_to_use)
 
@@ -97,6 +96,8 @@ def get_singletask_experiment(
         data_type = "cifar10"
     elif name == "CIFAR100":
         data_type = "cifar100"
+    elif name == "imagenet100":
+        data_type = "imagenet100"
     else:
         raise ValueError("Given undefined experiment: {}".format(name))
 
@@ -114,7 +115,7 @@ def get_singletask_experiment(
         augment=augment,
     )
     testset = get_dataset(
-        data_type, type="test", dir=data_dir, verbose=verbose, normalize=normalize
+        data_type, type="test" if data_type != "imagenet100" else "val", dir=data_dir, verbose=verbose, normalize=normalize
     )
 
     # Return tuple of data-sets and config-dictionary
@@ -364,6 +365,84 @@ def get_multitask_experiment(
                 test_datasets.append(
                     SubDataset(cifar10_test, labels, target_transform=target_transform)
                 )
+    elif name == "imagenet100":
+        # check for number of tasks
+        if tasks > 100:
+            raise ValueError("Experiment 'imagenet100' cannot have more than 100 tasks!")
+        # configurations
+        config = DATASET_CONFIGS["imagenet100"]
+        classes_per_task = int(np.floor(100 / tasks))
+        if not only_config:
+            # prepare permutation to shuffle label-ids (to create different class batches for each random seed)
+            permutation = np.array(list(range(100)))
+            target_transform = transforms.Lambda(
+                lambda y, x=permutation: int(y)
+            )
+            # prepare train and test datasets with all classes
+            if not only_test:
+                cifar100_train = get_dataset(
+                    "imagenet100",
+                    type="train",
+                    dir=data_dir,
+                    normalize=normalize,
+                    augment=augment,
+                    target_transform=target_transform,
+                    verbose=verbose,
+                )
+            cifar100_test = get_dataset(
+                "imagenet100",
+                type="val",
+                dir=data_dir,
+                normalize=normalize,
+                target_transform=target_transform,
+                verbose=verbose,
+            )
+            # generate labels-per-task
+            labels_per_task = [
+                list(np.array(range(classes_per_task)) + classes_per_task * task_id)
+                for task_id in range(tasks)
+            ]
+            print(labels_per_task)
+            # split them up into sub-tasks
+            train_datasets = []
+            test_datasets = []
+            task_indices_train = [[] for _ in range(tasks)]
+            task_indices_test = [[] for _ in range(tasks)]
+
+            for idx in tqdm(range(len(cifar100_train))):
+                label = cifar100_train[idx][1]
+                for task_id in range(tasks):
+                    if label in labels_per_task[task_id]:
+                        task_indices_train[task_id].append(idx)
+                        break
+            for idx in tqdm(range(len(cifar100_test))):
+                label = cifar100_test[idx][1]
+                for task_id in range(tasks):
+                    if label in labels_per_task[task_id]:
+                        task_indices_test[task_id].append(idx)
+                        break
+            for task_id in range(tasks):
+                train_datasets.append(ReducedDataset(cifar100_train, task_indices_train[task_id]))
+                test_datasets.append(ReducedDataset(cifar100_test, task_indices_test[task_id]))
+
+            # for labels in labels_per_task:
+            #     print(labels)
+            #     target_transform = (
+            #         transforms.Lambda(lambda y, x=labels[0]: y - x)
+            #         if scenario == "domain"
+            #         else None
+            #     )
+            #     if not only_test:
+            #         train_datasets.append(
+            #             SubDataset(
+            #                 cifar100_train,
+            #                 labels,
+            #                 target_transform=target_transform,
+            #             )
+            #         )
+            #     test_datasets.append(
+            #         SubDataset(cifar100_test, labels, target_transform=target_transform)
+            #     )
     else:
         raise RuntimeError("Given undefined experiment: {}".format(name))
 
@@ -371,10 +450,12 @@ def get_multitask_experiment(
     config["classes"] = (
         classes_per_task if scenario == "domain" else classes_per_task * tasks
     )
-    config["normalize"] = normalize if name in {"CIFAR100", "CIFAR10"} else False
+    config["normalize"] = normalize if name in {"CIFAR100", "CIFAR10", "imagenet100"} else False
     if config["normalize"]:
         if name == "CIFAR100":
             config["denormalize"] = AVAILABLE_TRANSFORMS["cifar100_denorm"]
+        elif name == "imagenet100":
+            config["denormalize"] = AVAILABLE_TRANSFORMS["imagenet100_denorm"]
         else:
             config["denormalize"] = AVAILABLE_TRANSFORMS["cifar10_denorm"]
 

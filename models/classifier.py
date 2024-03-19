@@ -13,7 +13,7 @@ class Classifier(ContinualLearner):
 
     def __init__(self, image_size, image_channels, classes,
                  # -conv-layers
-                 conv_type="standard", depth=0, start_channels=64, reducing_layers=3, conv_bn=True, conv_nl="relu",
+                 conv_type="resnet", depth=0, start_channels=64, reducing_layers=3, conv_bn=True, conv_nl="relu",
                  num_blocks=2, global_pooling=False, no_fnl=True, conv_gated=False,
                  # -fc-layers
                  fc_layers=3, fc_units=1000, h_dim=400, fc_drop=0, fc_bn=True, fc_nl="relu", fc_gated=False,
@@ -265,4 +265,3 @@ class Classifier(ContinualLearner):
             'ewc': ewc_loss.item(), 'si_loss': surrogate_loss.item(),
             'accuracy': accuracy if accuracy is not None else 0.,
         }
-

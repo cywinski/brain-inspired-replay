@@ -28,13 +28,13 @@ class SubDataset(Dataset):
         self.dataset = original_dataset
         self.sub_indeces = []
         for index in range(len(self.dataset)):
-            if hasattr(original_dataset, "targets"):
-                if self.dataset.target_transform is None:
-                    label = self.dataset.targets[index]
-                else:
-                    label = self.dataset.target_transform(self.dataset.targets[index])
-            else:
-                label = self.dataset[index][1]
+            # if hasattr(original_dataset, "targets"):
+            #     if self.dataset.target_transform is None:
+            #         label = self.dataset.targets[index]
+            #     else:
+            #         label = self.dataset.target_transform(self.dataset.targets[index])
+            # else:
+            label = self.dataset[index][1]
             if label in sub_labels:
                 self.sub_indeces.append(index)
         self.target_transform = target_transform

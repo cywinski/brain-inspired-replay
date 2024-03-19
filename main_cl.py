@@ -35,6 +35,8 @@ def handle_inputs():
     parser = options.add_replay_options(parser, **kwargs)
     parser = options.add_bir_options(parser, **kwargs)
     parser = options.add_allocation_options(parser, **kwargs)
+    parser.add_argument("--d_dir", type=str, default="data")
+
     # Parse, process (i.e., set defaults for unselected options) and check chosen options
     args = parser.parse_args()
     options.set_defaults(args, **kwargs)
@@ -44,7 +46,7 @@ def handle_inputs():
 
 ## Function for running one continual learning experiment
 def run(args, verbose=False):
-
+    print(args)
     # Create plots- and results-directories if needed
     if not os.path.isdir(args.r_dir):
         os.mkdir(args.r_dir)
